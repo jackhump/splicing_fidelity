@@ -12,6 +12,8 @@ hg38_introns <- "gencode_hg38_all_introns.bed.gz"
 files <- "RBPs/hnrnpk_files.txt"
 
 files <- "RBPs/ALS_RBP_list.txt"
+files <- "RBPs/all_ENCODE_junctions.txt"
+
 files <- read.table(files, header=TRUE, stringsAsFactors=FALSE)
 
 #test <- "../ENCODE/HNRNPK/HepG2_ENCSR853ZJS/processed/control_1/control_1SJ.out.tab"
