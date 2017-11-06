@@ -41,9 +41,10 @@ annotateJunctions <- function(file, intron_db, file_id){
   junctions <- fread(file, data.table=FALSE)
   
   # work out whether a leafcutter junction file or a STAR junction file
+  fileType <- "unknown"
   if( 
     ncol(junctions) == 9 &
-    all( sapply(junctions[,2:9], is.integer) ) 
+    all( sapply(junctions[,2:ncol(junctions)], is.integer) ) 
     ){
     fileType <- "STAR"
     
@@ -62,13 +63,19 @@ annotateJunctions <- function(file, intron_db, file_id){
       filter( strand != 0) %>%
       mutate( start = start - 1, 
               strand = ifelse( strand == 1, "+", "-" ))
-  }else{
+  }
+  if(ncol(junctions) == 6){
   fileType <- "leafcutter"
   sorted <- junctions %>% 
     dplyr::arrange(V1, V2) %>%
     mutate( V1 = paste0("chr", V1)) %>%
     rename( chr = V1, start = V2, end = V3, dot = V4, count = V5, strand = V6) %>%
     select( chr, start, end, count, strand )
+  }
+  
+  if( fileType == "unknown"){
+    message("file not recognised")
+    return(NULL)
   }
   
   # find exact matches of both splice sites
@@ -164,11 +171,23 @@ annotateJunctions <- function(file, intron_db, file_id){
 createSimpleProportions <- function( annotated_df ){
     sample <- annotated_df$counts
     ID <- annotated_df$ID
+    prop_unique_anchored <- sample$n_unique[2] / sum(sample$n_unique)
+    prop_unique_unanchored <- sample$n_unique[3] / sum(sample$n_unique)
+    prop_unique_skiptic <- sample$n_unique[4] / sum(sample$n_unique)
     prop_unique <- 1 - (sample$n_unique[1] / sum(sample$n_unique) )
     prop_sum <- 1 - (sample$sum_counts[1] / sum(sample$sum_counts) )
+    prop_sum_anchored <- sample$sum_counts[2] / sum(sample$sum_counts)
+    prop_sum_unanchored <- sample$sum_counts[3] / sum(sample$sum_counts)
+    prop_sum_skiptic <- sample$sum_counts[4] / sum(sample$sum_counts)
     annotated_df$proportions <- data.frame(accession = ID,
                                            prop_unique = prop_unique,
-                                           prop_sum = prop_sum)
+                                           prop_sum = prop_sum,
+                                           prop_unique_anchored = prop_unique_anchored,
+                                           prop_unique_unanchored = prop_unique_unanchored,
+                                           prop_unique_skiptic = prop_unique_skiptic,
+                                           prop_sum_anchored = prop_sum_anchored,
+                                           prop_sum_unanchored = prop_sum_unanchored,
+                                           prop_sum_skiptic = prop_sum_skiptic)
   return(annotated_df)
 }
 
